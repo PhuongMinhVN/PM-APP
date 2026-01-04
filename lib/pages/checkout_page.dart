@@ -114,8 +114,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
         throw Exception('Quyền vị trí bị từ chối vĩnh viễn. Hãy vào cài đặt bật lại.');
       }
 
-      // Try to get last known position first for instant result
-      Position? position = await Geolocator.getLastKnownPosition();
+      Position? position;
+      
+      try {
+        // getLastKnownPosition is not supported on Web
+        // We can just skip it for web or catch the specific error, 
+        // but 'kIsWeb' check is cleaner if we import foundation.
+        // For now, let's just use try-catch around it to fail gracefully to getCurrentPosition
+        position = await Geolocator.getLastKnownPosition();
+      } catch (_) {
+        // Ignore error (e.g. Unsupported operation on Web) and proceed to getCurrentPosition
+      }
 
       if (position == null) {
         // Use LocationSettings with balanced accuracy for faster results on Web/Desktop
