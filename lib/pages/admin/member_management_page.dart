@@ -66,6 +66,63 @@ class _MemberManagementPageState extends State<MemberManagementPage> {
     }
   }
 
+  Future<void> _resetPassword(String userId, String userName) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Đặt lại mật khẩu'),
+        content: Text('Bạn có chắc muốn đặt lại mật khẩu cho "$userName" thành "123456" không?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Đồng ý'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await Supabase.instance.client.rpc('reset_password_by_admin', params: {
+        'target_user_id': userId,
+        'new_password': '123456', // Default reset password
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã đặt lại mật khẩu thành "123456"')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi đặt lại mật khẩu: $e')));
+      }
+    }
+  }
+
+  Future<void> _updateStatus(String userId, String newStatus) async {
+    try {
+      await Supabase.instance.client
+          .from('profiles')
+          .update({'status': newStatus})
+          .eq('id', userId);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Đã ${newStatus == 'active' ? 'kích hoạt' : 'vô hiệu hóa'} thành viên'),
+          backgroundColor: newStatus == 'active' ? Colors.green : Colors.orange,
+        ));
+        _fetchUsers(); // Refresh list to update UI
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi cập nhật trạng thái: $e')));
+      }
+    }
+  }
+
   Future<void> _deleteUser(String userId) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -334,10 +391,29 @@ class _MemberManagementPageState extends State<MemberManagementPage> {
                           ),
                           trailing: isMe 
                               ? const Chip(label: Text('Admin'), backgroundColor: Colors.redAccent)
-                              : IconButton(
-                                  onPressed: () => _deleteUser(user.id),
-                                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                  tooltip: 'Xóa user',
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Transform.scale(
+                                      scale: 0.8,
+                                      child: Switch(
+                                        value: user.isActive,
+                                        onChanged: (val) => _updateStatus(user.id, val ? 'active' : 'disabled'),
+                                        activeColor: Colors.green,
+                                        inactiveThumbColor: Colors.grey,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      onPressed: () => _resetPassword(user.id, user.fullName ?? user.phone ?? 'User'),
+                                      icon: const Icon(Icons.lock_reset, color: Colors.blue),
+                                      tooltip: 'Đặt lại mật khẩu (123456)',
+                                    ),
+                                    IconButton(
+                                      onPressed: () => _deleteUser(user.id),
+                                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                      tooltip: 'Xóa user',
+                                    ),
+                                  ],
                                 ),
                         ),
                         const Divider(),

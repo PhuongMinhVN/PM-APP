@@ -12,14 +12,19 @@ import 'pages/splash_page.dart';
 import 'pages/contact_page.dart';
 import 'pages/sales_statistics_page.dart';
 import 'pages/profile_page.dart';
+import 'pages/customer_warranty_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Supabase.initialize(
-    url: 'https://rzygcjxrxwblhbstvfvk.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6eWdjanhyeHdibGhic3R2ZnZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0ODk0MTAsImV4cCI6MjA4MzA2NTQxMH0.269gTcCqMEPsem3zQrvbU6Pni0TBjGuMM1DwGzfqf_I',
-  );
+  try {
+    await Supabase.initialize(
+      url: 'https://rzygcjxrxwblhbstvfvk.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6eWdjanhyeHdibGhic3R2ZnZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc0ODk0MTAsImV4cCI6MjA4MzA2NTQxMH0.269gTcCqMEPsem3zQrvbU6Pni0TBjGuMM1DwGzfqf_I',
+    );
+  } catch (e) {
+    debugPrint('Supabase initialization failed: $e');
+  }
 
   runApp(const MyApp());
 }
@@ -86,6 +91,7 @@ class MyApp extends StatelessWidget {
           '/profile': (context) => const ProfilePage(),
           '/contact': (context) => const ContactPage(),
           '/sales_stats': (context) => const SalesStatisticsPage(),
+          '/lookup_warranty': (context) => const CustomerWarrantyPage(),
         },
       ),
     );

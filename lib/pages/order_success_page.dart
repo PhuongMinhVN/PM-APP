@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'dart:typed_data';
 import '../utils/save_file_helper.dart';
+import 'my_orders_page.dart';
 
 class OrderSuccessPage extends StatefulWidget {
   final String orderId;
@@ -126,6 +127,16 @@ class _OrderSuccessPageState extends State<OrderSuccessPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 ),
                 child: const Text('Về Trang Chủ'),
+              ),
+              const Gap(16),
+              TextButton(
+                onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MyOrdersPage()),
+                    );
+                },
+                child: const Text('Xem Trạng Thái Đơn Hàng'),
               ),
             ],
           ),

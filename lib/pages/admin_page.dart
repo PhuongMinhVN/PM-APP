@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:gap/gap.dart';
 import 'admin/member_management_page.dart';
+import 'admin/pending_orders_page.dart';
+import 'admin/customer_management_page.dart';
 import 'sales_statistics_page.dart';
 
 class AdminPage extends StatefulWidget {
@@ -98,6 +100,28 @@ class _AdminPageState extends State<AdminPage> {
                      Navigator.push(
                        context,
                        MaterialPageRoute(builder: (context) => const SalesStatisticsPage()),
+                     );
+                  },
+                ),
+                _buildAdminCard(
+                  icon: Icons.checklist,
+                  title: 'Duyệt Đơn Hàng',
+                  color: Colors.redAccent,
+                  onTap: () {
+                     Navigator.push(
+                       context,
+                       MaterialPageRoute(builder: (context) => const PendingOrdersPage()),
+                     );
+                  },
+                ),
+                _buildAdminCard(
+                  icon: Icons.recent_actors,
+                  title: 'Quản Lý Khách Hàng',
+                  color: Colors.teal,
+                  onTap: () {
+                     Navigator.push(
+                       context,
+                       MaterialPageRoute(builder: (context) => const CustomerManagementPage()),
                      );
                   },
                 ),

@@ -9,6 +9,7 @@ import '../models/profile.dart';
 import 'checkout_page.dart';
 import 'add_product_page.dart';  
 import 'product_detail_page.dart'; // Import detail page
+import 'my_orders_page.dart'; // Import my orders page
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -33,6 +34,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     'Smarthome',
     'Thiết bị mạng',
     'Khác',
+    'Dịch vụ',
   ];
 
   @override
@@ -134,30 +136,126 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
   void _goToCheckout() async {
-    // Navigate to checkout. 
-    // If it returns, it might mean success (handled inside Checkout to redirect) OR cancel.
-    // Actually, CheckoutPage now pushes OrderSuccessPage.
-    // But when OrderSuccessPage pops, it returns true if "Go Home" is clicked.
-    // Wait, CheckoutPage uses pushReplacement. So duplicate logic isn't ideal.
-    
-    // Revised logic:
-    // CheckoutPage -> Pushes Replacement OrderSuccessPage.
-    // OrderSuccessPage -> Pops with 'true'.
-    // That pop will go back to HomePage? No, CheckoutPage replaced itself.
-    // So HomePage stays in stack. OrderSuccessPage is on top.
-    // When OrderSuccessPage pops, it returns to HomePage.
-    // So we just need to await the navigation result from the initial push.
-    
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => CheckoutPage(cart: context.read<CartProvider>().cart)),
     );
-    
-    // If we come back and it was successful (true), clear cart.
     if (result == true) {
       if (mounted) context.read<CartProvider>().clearCart();
     }
   }
+
+  void _showAddServiceDialog() {
+    final nameCtrl = TextEditingController();
+    final priceCtrl = TextEditingController();
+    final warrantyCtrl = TextEditingController(text: '0');
+    bool isLoading = false;
+    int serviceType = 0; // 0 = Paid, 1 = Warranty
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Thêm Dịch Vụ / Sửa Chữa'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Tên thiết bị / lỗi'),
+                autofocus: true,
+              ),
+              const Gap(16),
+              const Text('Loại dịch vụ:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<int>(
+                      title: const Text('Thu Phí', style: TextStyle(fontSize: 12)),
+                      value: 0,
+                      groupValue: serviceType,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (v) => setState(() => serviceType = v!),
+                    ),
+                  ),
+                  Expanded(
+                    child: RadioListTile<int>(
+                      title: const Text('Bảo Hành', style: TextStyle(fontSize: 12)),
+                      value: 1,
+                      groupValue: serviceType,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (v) => setState(() => serviceType = v!),
+                    ),
+                  ),
+                ],
+              ),
+              if (serviceType == 0) ...[
+                const Gap(8),
+                TextField(
+                  controller: priceCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Giá tiền (VNĐ)'),
+                ),
+              ],
+              const Gap(8),
+              if (serviceType == 0)
+              TextField(
+                controller: warrantyCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Bảo hành sửa chữa (tháng)'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Hủy'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (nameCtrl.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập tên dịch vụ')));
+                  return;
+                }
+                if (serviceType == 0 && priceCtrl.text.isEmpty) {
+                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập giá tiền')));
+                   return;
+                }
+                
+                double price = 0;
+                String displayName = nameCtrl.text.trim();
+                
+                if (serviceType == 0) {
+                  price = double.tryParse(priceCtrl.text) ?? 0;
+                } else {
+                  price = 0;
+                  displayName = 'BẢO HÀNH: $displayName';
+                }
+
+                // Generate Temporary ID for Service Item (Not in DB)
+                final tempId = 'service-${DateTime.now().millisecondsSinceEpoch}';
+
+                final newProduct = Product(
+                  id: tempId,
+                  name: displayName,
+                  price: price,
+                  warrantyPeriodMonths: int.tryParse(warrantyCtrl.text) ?? 0,
+                  category: 'Dịch vụ',
+                  createdAt: DateTime.now(),
+                  cartSalePrice: price, 
+                );
+                
+                _addToCart(newProduct);
+                Navigator.pop(context);
+              },
+              child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(serviceType == 0 ? 'Thêm & Ra Bill' : 'Báo Hoàn Thành'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   @override
   void dispose() {
@@ -189,11 +287,25 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             if (_profile?.isAdmin == true)
             IconButton(
               onPressed: () async {
-                 await Navigator.pushNamed(context, '/add_product');
+                 await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddProductPage()));
                  _fetchProducts();
               },
               icon: const Icon(Icons.add),
               tooltip: 'Thêm sản phẩm',
+            ),
+            if (_profile?.isAdmin == true)
+             IconButton(
+              onPressed: () async {
+                 await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddProductPage(isService: true)));
+                 _fetchProducts();
+              },
+              icon: const Icon(Icons.add_task), // Icon for service product
+              tooltip: 'Thêm Dịch Vụ Mới',
+            ),
+             IconButton(
+              onPressed: () => _showAddServiceDialog(),
+              icon: const Icon(Icons.design_services), // Icon for repair/quick service
+              tooltip: 'Thêm Sửa Chữa / Dịch Vụ Nhanh',
             ),
         ],
       ),
@@ -325,6 +437,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             leading: const Icon(Icons.home),
             title: const Text('Trang Chủ'),
             onTap: () => Navigator.pop(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.list_alt),
+            title: const Text('Đơn Hàng Của Tôi'),
+            onTap: () {
+               Navigator.pop(context);
+               Navigator.push(context, MaterialPageRoute(builder: (context) => const MyOrdersPage()));
+            },
           ),
           ListTile(
             leading: const Icon(Icons.security),

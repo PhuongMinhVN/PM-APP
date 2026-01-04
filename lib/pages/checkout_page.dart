@@ -7,6 +7,8 @@ import 'package:url_launcher/url_launcher_string.dart';
 import '../models/product.dart';
 import 'order_success_page.dart';  
 import '../services/invoice_service.dart';
+import 'package:provider/provider.dart';
+import '../providers/cart_provider.dart';
 
 // Helper class for Cart Logic
 class CartItem {
@@ -96,19 +98,37 @@ class _CheckoutPageState extends State<CheckoutPage> {
     setState(() => _isGettingLocation = true);
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) throw Exception('Location services are disabled.');
+      if (!serviceEnabled) {
+        throw Exception('Vui lòng bật định vị (Location Services) trên thiết bị.');
+      }
 
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) throw Exception('Location permissions are denied');
+        if (permission == LocationPermission.denied) {
+          throw Exception('Quyền truy cập vị trí bị từ chối.');
+        }
       }
       
       if (permission == LocationPermission.deniedForever) {
-        throw Exception('Location permissions are permanently denied.');
+        throw Exception('Quyền vị trí bị từ chối vĩnh viễn. Hãy vào cài đặt bật lại.');
       }
 
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      // Try to get last known position first for instant result
+      Position? position = await Geolocator.getLastKnownPosition();
+
+      if (position == null) {
+        // Use LocationSettings with balanced accuracy for faster results on Web/Desktop
+        const LocationSettings locationSettings = LocationSettings(
+          accuracy: LocationAccuracy.medium, 
+          distanceFilter: 100,
+          timeLimit: Duration(seconds: 10), 
+        );
+
+        // Force a Dart-side timeout in case the plugin hangs
+        position = await Geolocator.getCurrentPosition(locationSettings: locationSettings)
+            .timeout(const Duration(seconds: 10));
+      }
       
       final googleMapsUrl = 'https://www.google.com/maps/?q=${position.latitude},${position.longitude}';
       
@@ -116,11 +136,22 @@ class _CheckoutPageState extends State<CheckoutPage> {
         setState(() {
           _mapLinkController.text = googleMapsUrl;
         });
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã lấy vị trí thành công!')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Đã lấy vị trí thành công!'),
+          backgroundColor: Color(0xFF10B981),
+        ));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+        String msg = 'Lỗi lấy vị trí: $e';
+        if (e.toString().contains('User denied')) msg = 'Bạn đã từ chối cấp quyền vị trí.';
+        if (e.toString().contains('TimeoutException')) msg = 'Không thể lấy vị trí (quá thời gian). Kiểm tra kết nối mạng.';
+        
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(msg),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ));
       }
     } finally {
       if (mounted) setState(() => _isGettingLocation = false);
@@ -146,6 +177,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
             'total_amount': _total,
             'created_by': user.id,
             'seller_id': user.id, 
+            'status': 'pending', // Explicitly set as pending
           })
           .select()
           .single();
@@ -187,6 +219,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           'price_at_sale': price,
           'quantity': item.quantity, // Insert Quantity
           'warranty_end_date': endDate.toIso8601String(),
+          'is_service': int.tryParse(product.id) == null || product.category == 'Dịch vụ',
         });
 
         invoiceItems.add({
@@ -236,6 +269,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
       }
 
       if (mounted) {
+        // Clear cart after success
+        context.read<CartProvider>().clearCart();
+        
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => OrderSuccessPage(orderId: qrCode)),

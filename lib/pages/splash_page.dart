@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 
@@ -13,12 +14,45 @@ class _SplashPageState extends State<SplashPage> {
   @override
   void initState() {
     super.initState();
-    // Simulate loading time then navigate
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
-      }
-    });
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    await Future.delayed(const Duration(seconds: 2)); // Show splash for a bit
+    
+    if (!mounted) return;
+
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+       // Check role
+       try {
+         final profile = await Supabase.instance.client
+             .from('profiles')
+             .select()
+             .eq('id', session.user.id)
+             .maybeSingle();
+         
+         if (mounted) {
+           final status = profile?['status'] as String? ?? 'active';
+           if (status != 'active') {
+              await Supabase.instance.client.auth.signOut();
+              Navigator.pushReplacementNamed(context, '/login');
+              return;
+           }
+
+           if (profile != null && profile['role'] == 'admin') {
+             Navigator.pushReplacementNamed(context, '/admin');
+           } else {
+             Navigator.pushReplacementNamed(context, '/home');
+           }
+         }
+       } catch (e) {
+         // If error checking profile, go to home as safe default
+         if (mounted) Navigator.pushReplacementNamed(context, '/home');
+       }
+    } else {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
   }
 
   @override

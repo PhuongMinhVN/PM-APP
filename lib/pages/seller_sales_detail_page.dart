@@ -35,6 +35,7 @@ class _SellerSalesDetailPageState extends State<SellerSalesDetailPage> {
           .from('orders')
           .select()
           .eq('seller_id', widget.sellerId)
+          .eq('status', 'confirmed')
           .order('created_at', ascending: false);
       
       final data = List<Map<String, dynamic>>.from(response);

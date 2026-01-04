@@ -9,7 +9,8 @@ import 'scan_qr_page.dart';
 class AddProductPage extends StatefulWidget {
   final Product? productToEdit;
   final Product? productToClone;
-  const AddProductPage({super.key, this.productToEdit, this.productToClone});
+  final bool isService;
+  const AddProductPage({super.key, this.productToEdit, this.productToClone, this.isService = false});
 
   @override
   State<AddProductPage> createState() => _AddProductPageState();
@@ -30,6 +31,7 @@ class _AddProductPageState extends State<AddProductPage> {
     'Smarthome',
     'Thiết bị mạng',
     'Khác',
+    'Dịch vụ',
   ];
 
   bool _isTwoYearWarranty = false;
@@ -49,6 +51,10 @@ class _AddProductPageState extends State<AddProductPage> {
       _qrController.text = widget.productToClone != null ? '' : (p.qrCode ?? '');
       _specsController.text = p.technicalSpecs ?? '';
       _isTwoYearWarranty = p.warrantyPeriodMonths >= 24;
+    } else {
+      if (widget.isService) {
+        _selectedCategory = 'Dịch vụ';
+      }
     }
   }
 
@@ -178,7 +184,9 @@ class _AddProductPageState extends State<AddProductPage> {
     final isEditing = widget.productToEdit != null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Sửa Sản Phẩm' : 'Thêm Sản Phẩm'),
+        title: Text(isEditing 
+            ? 'Sửa ${widget.isService ? "Dịch Vụ" : "Sản Phẩm"}' 
+            : 'Thêm ${widget.isService ? "Dịch Vụ" : "Sản Phẩm"}'),
         actions: [
           if (isEditing)
             IconButton(
@@ -202,8 +210,8 @@ class _AddProductPageState extends State<AddProductPage> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Tên sản phẩm'),
-                validator: (v) => v == null || v.isEmpty ? 'Nhập tên sản phẩm' : null,
+                decoration: InputDecoration(labelText: 'Tên ${widget.isService ? "dịch vụ" : "sản phẩm"}'),
+                validator: (v) => v == null || v.isEmpty ? 'Nhập tên ${widget.isService ? "dịch vụ" : "sản phẩm"}' : null,
               ),
               const Gap(16),
               DropdownButtonFormField<String>(
@@ -220,9 +228,9 @@ class _AddProductPageState extends State<AddProductPage> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [CurrencyInputFormatter()],
                 decoration: InputDecoration(
-                  labelText: 'Giá sản phẩm (VNĐ)',
+                  labelText: 'Giá ${widget.isService ? "dịch vụ" : "sản phẩm"} (VNĐ)',
                   suffixText: 'đ',
-                  helperText: isEditing ? 'Giá hiện tại (chưa tính BH 2 năm nếu đổi)' : null,
+                  helperText: isEditing ? 'Giá hiện tại' : null,
                 ),
                 validator: (v) => v == null || v.isEmpty ? 'Nhập giá' : null,
               ),
@@ -230,9 +238,9 @@ class _AddProductPageState extends State<AddProductPage> {
               TextFormField(
                 controller: _specsController,
                 maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Tính năng kỹ thuật',
-                  hintText: 'Nhập thông số kỹ thuật, tính năng nổi bật...',
+                decoration: InputDecoration(
+                  labelText: widget.isService ? 'Mô tả dịch vụ' : 'Tính năng kỹ thuật',
+                  hintText: 'Nhập thông tin chi tiết...',
                   alignLabelWithHint: true,
                 ),
               ),
@@ -261,6 +269,7 @@ class _AddProductPageState extends State<AddProductPage> {
                 ],
               ),
               const Gap(16),
+              if (!widget.isService)
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Bảo hành 2 năm (+20% giá)'),
@@ -269,7 +278,7 @@ class _AddProductPageState extends State<AddProductPage> {
                   setState(() => _isTwoYearWarranty = val);
                 },
               ),
-              if (_isTwoYearWarranty)
+              if (_isTwoYearWarranty && !widget.isService)
                 Padding(
                    padding: const EdgeInsets.only(bottom: 16),
                    child: Text(
@@ -287,7 +296,7 @@ class _AddProductPageState extends State<AddProductPage> {
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : Text(isEditing ? 'Cập Nhật' : 'Lưu Sản Phẩm', style: const TextStyle(fontSize: 16)),
+                    : Text(isEditing ? 'Cập Nhật' : 'Lưu ${widget.isService ? "Dịch Vụ" : "Sản Phẩm"}', style: const TextStyle(fontSize: 16)),
               ),
             ],
           ),

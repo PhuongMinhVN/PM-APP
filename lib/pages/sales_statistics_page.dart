@@ -39,20 +39,21 @@ class _SalesStatisticsPageState extends State<SalesStatisticsPage> {
       // 2. Fetch Orders (For Revenue, Customers, and Seller Stats)
       final ordersResponse = await Supabase.instance.client
           .from('orders')
-          .select('seller_id, total_amount, customer_phone');
+          .select('seller_id, total_amount, customer_phone')
+          .eq('status', 'confirmed');
       final orders = List<Map<String, dynamic>>.from(ordersResponse);
 
       // 3. Fetch Order Items Count (Products vs Services)
-      // Service items have product_id == NULL
+      // Service items have is_service == true
       final servicesCount = await Supabase.instance.client
           .from('order_items')
           .count(CountOption.exact)
-          .filter('product_id', 'is', null);
+          .eq('is_service', true);
       
       final productsCount = await Supabase.instance.client
           .from('order_items')
           .count(CountOption.exact)
-          .not('product_id', 'is', null);
+          .eq('is_service', false);
 
       _servicesSold = servicesCount;
       _productsSold = productsCount;

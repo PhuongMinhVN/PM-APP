@@ -133,38 +133,84 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _updatePassword() async {
     final passwordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    
+    // Using a ValueNotifier to manage state within the dialog without creating a separate StatefulWidget class
+    // actually, StatefulBuilder is better for Dialogs
     
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Đổi Mật Khẩu'),
-        content: TextField(
-          controller: passwordController,
-          obscureText: true,
-          decoration: const InputDecoration(labelText: 'Mật khẩu mới'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
-          ElevatedButton(
-            onPressed: () async {
-               if (passwordController.text.length < 6) {
-                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mật khẩu phải > 6 ký tự')));
-                 return;
-               }
-               Navigator.pop(context);
-               try {
-                 await Supabase.instance.client.auth.updateUser(
-                   UserAttributes(password: passwordController.text.trim())
-                 );
-                 if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đổi mật khẩu thành công!')));
-               } catch (e) {
-                 if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
-               }
-            },
-            child: const Text('Lưu'),
-          ),
-        ],
-      ),
+      builder: (context) {
+        bool obscurePassword = true;
+        bool obscureConfirm = true;
+
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text('Đổi Mật Khẩu'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: passwordController,
+                    obscureText: obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: 'Mật khẩu mới',
+                      suffixIcon: IconButton(
+                        icon: Icon(obscurePassword ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () => setStateDialog(() => obscurePassword = !obscurePassword),
+                      ),
+                    ),
+                  ),
+                  const Gap(16),
+                  TextField(
+                    controller: confirmPasswordController,
+                    obscureText: obscureConfirm,
+                    decoration: InputDecoration(
+                      labelText: 'Xác nhận mật khẩu mới',
+                      suffixIcon: IconButton(
+                        icon: Icon(obscureConfirm ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () => setStateDialog(() => obscureConfirm = !obscureConfirm),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
+                ElevatedButton(
+                  onPressed: () async {
+                     final pass = passwordController.text;
+                     final confirm = confirmPasswordController.text;
+
+                     if (pass.length < 6) {
+                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mật khẩu phải > 6 ký tự')));
+                       return;
+                     }
+                     
+                     if (pass != confirm) {
+                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mật khẩu xác nhận không khớp')));
+                       return;
+                     }
+
+                     Navigator.pop(context); // Close dialog first
+
+                     try {
+                       await Supabase.instance.client.auth.updateUser(
+                         UserAttributes(password: pass.trim())
+                       );
+                       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đổi mật khẩu thành công!')));
+                     } catch (e) {
+                       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+                     }
+                  },
+                  child: const Text('Lưu'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

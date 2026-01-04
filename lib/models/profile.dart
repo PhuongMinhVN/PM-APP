@@ -6,6 +6,7 @@ class Profile {
 
   final String? phone;
   final String? avatarUrl;
+  final String status;
 
   Profile({
     required this.id,
@@ -14,6 +15,7 @@ class Profile {
     required this.createdAt,
     this.phone,
     this.avatarUrl,
+    this.status = 'active',
   });
 
   factory Profile.fromJson(Map<String, dynamic> json) {
@@ -24,9 +26,11 @@ class Profile {
       createdAt: DateTime.parse(json['created_at'] as String),
       phone: json['phone_number'] as String?,
       avatarUrl: json['avatar_url'] as String?,
+      status: json['status'] as String? ?? 'active',
     );
   }
 
   bool get isAdmin => role == 'admin';
   bool get isSales => role == 'sales';
+  bool get isActive => status == 'active';
 }

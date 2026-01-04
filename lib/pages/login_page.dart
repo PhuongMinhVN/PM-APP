@@ -71,6 +71,23 @@ class _LoginPageState extends State<LoginPage> {
               Navigator.pushReplacementNamed(context, '/home');
            } else {
              final role = profileData['role'] as String?;
+             final status = profileData['status'] as String? ?? 'active';
+
+             if (status != 'active') {
+                await Supabase.instance.client.auth.signOut();
+                if (mounted) {
+                   ScaffoldMessenger.of(context).showSnackBar(
+                     const SnackBar(
+                       content: Text('Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ Admin.'),
+                       backgroundColor: Colors.red,
+                       duration: Duration(seconds: 5),
+                     ),
+                   );
+                   setState(() => _isLoading = false);
+                }
+                return;
+             }
+
              if (role == 'admin') {
                Navigator.pushReplacementNamed(context, '/admin');
              } else {
@@ -160,6 +177,16 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                   const Gap(24),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/lookup_warranty');
+                      },
+                      icon: const Icon(Icons.search, size: 16),
+                      label: const Text('Tra Cứu Bảo Hành'),
+                    ),
+                  ),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(

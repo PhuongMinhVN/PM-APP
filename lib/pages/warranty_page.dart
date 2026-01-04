@@ -119,12 +119,7 @@ class _WarrantyPageState extends State<WarrantyPage> {
     }
   }
 
-  void _addToCart(Product product) {
-    context.read<CartProvider>().addToCart(product);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Đã thêm ${product.name} vào giỏ'), duration: const Duration(seconds: 1)),
-    );
-  }
+
 
   void _goToCheckout() async {
     final result = await Navigator.push(
@@ -136,116 +131,7 @@ class _WarrantyPageState extends State<WarrantyPage> {
     }
   }
 
-  void _showAddServiceDialog() {
-    final nameCtrl = TextEditingController();
-    final priceCtrl = TextEditingController();
-    final warrantyCtrl = TextEditingController(text: '0');
-    bool isLoading = false;
-    int serviceType = 0; // 0 = Paid, 1 = Warranty
 
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Thêm Dịch Vụ / Sửa Chữa'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Tên thiết bị / lỗi'),
-                autofocus: true,
-              ),
-              const Gap(16),
-              const Text('Loại dịch vụ:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Row(
-                children: [
-                  Expanded(
-                    child: RadioListTile<int>(
-                      title: const Text('Thu Phí', style: TextStyle(fontSize: 12)),
-                      value: 0,
-                      groupValue: serviceType,
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (v) => setState(() => serviceType = v!),
-                    ),
-                  ),
-                  Expanded(
-                    child: RadioListTile<int>(
-                      title: const Text('Bảo Hành', style: TextStyle(fontSize: 12)),
-                      value: 1,
-                      groupValue: serviceType,
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (v) => setState(() => serviceType = v!),
-                    ),
-                  ),
-                ],
-              ),
-              if (serviceType == 0) ...[
-                const Gap(8),
-                TextField(
-                  controller: priceCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Giá tiền (VNĐ)'),
-                ),
-              ],
-              const Gap(8),
-              if (serviceType == 0)
-              TextField(
-                controller: warrantyCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Bảo hành sửa chữa (tháng)'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Hủy'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (nameCtrl.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập tên dịch vụ')));
-                  return;
-                }
-                if (serviceType == 0 && priceCtrl.text.isEmpty) {
-                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập giá tiền')));
-                   return;
-                }
-                
-                double price = 0;
-                String displayName = nameCtrl.text.trim();
-                
-                if (serviceType == 0) {
-                  price = double.tryParse(priceCtrl.text) ?? 0;
-                } else {
-                  price = 0;
-                  displayName = 'BẢO HÀNH: $displayName';
-                }
-
-                // Generate Temporary ID for Service Item (Not in DB)
-                final tempId = 'service-${DateTime.now().millisecondsSinceEpoch}';
-
-                final newProduct = Product(
-                  id: tempId,
-                  name: displayName,
-                  price: price,
-                  warrantyPeriodMonths: int.tryParse(warrantyCtrl.text) ?? 0,
-                  category: 'Dịch vụ',
-                  createdAt: DateTime.now(),
-                  cartSalePrice: price, 
-                );
-                
-                _addToCart(newProduct);
-                Navigator.pop(context);
-              },
-              child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(serviceType == 0 ? 'Thêm & Ra Bill' : 'Báo Hoàn Thành'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -253,11 +139,7 @@ class _WarrantyPageState extends State<WarrantyPage> {
       appBar: AppBar(
         title: const Text('Tra Cứu Bảo Hành'),
         actions: [
-          IconButton(
-            onPressed: () => _showAddServiceDialog(),
-            icon: const Icon(Icons.design_services),
-            tooltip: 'Thêm Dịch Vụ Sửa Chữa',
-          ),
+
           IconButton(
             icon: const Icon(Icons.home),
             onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false),
