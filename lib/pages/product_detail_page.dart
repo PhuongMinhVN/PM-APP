@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:gap/gap.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
+import '../providers/cart_provider.dart';
 import '../models/product.dart';
 import 'add_product_page.dart';
 
@@ -146,6 +148,25 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         Text(
                           _formatCurrency(_finalPrice),
                           style: const TextStyle(fontSize: 22, color: Color(0xFFCF6679), fontWeight: FontWeight.bold),
+                        ),
+                        const Gap(4),
+                        Consumer<CartProvider>(
+                           builder: (context, cart, child) {
+                             final p = cart.calculatePoints(widget.product);
+                             if (p > 0) {
+                               return Row(
+                                 children: [
+                                   const Icon(Icons.stars, color: Colors.amber, size: 18),
+                                   const Gap(4),
+                                   Text(
+                                     'Điểm thưởng: $p',
+                                      style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 16),
+                                   ),
+                                 ],
+                               );
+                             }
+                             return const SizedBox.shrink();
+                           }
                         ),
                         const Gap(16),
                         

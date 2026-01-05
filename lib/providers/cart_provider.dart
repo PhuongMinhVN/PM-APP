@@ -53,6 +53,16 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  int calculatePoints(Product product) {
+    if (product.rewardPoints > 0) {
+      return product.rewardPoints;
+    } 
+    if (product.category != null && _defaultPoints.containsKey(product.category)) {
+      return _defaultPoints[product.category!]!;
+    }
+    return 0;
+  }
+
   void clearCart() {
     _cart.clear();
     notifyListeners();
