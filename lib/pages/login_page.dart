@@ -177,16 +177,24 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                   const Gap(24),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
+                  const Gap(24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
                       onPressed: () {
+                        print('Navigating to Warranty Lookup...');
                         Navigator.pushNamed(context, '/lookup_warranty');
                       },
-                      icon: const Icon(Icons.search, size: 16),
+                      icon: const Icon(Icons.search),
                       label: const Text('Tra Cứu Bảo Hành'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: const BorderSide(color: Color(0xFF03DAC6)),
+                        foregroundColor: const Color(0xFF03DAC6),
+                      ),
                     ),
                   ),
+                  const Gap(16),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(

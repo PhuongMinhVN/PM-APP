@@ -39,19 +39,21 @@ class _CustomerWarrantyPageState extends State<CustomerWarrantyPage> {
     });
 
     try {
+      // Use RPC function for public access (bypassing RLS safely)
       final response = await Supabase.instance.client
-          .from('orders')
-          .select('*, order_items(*)')
-          .or('customer_phone.ilike.%$query%, customer_name.ilike.%$query%, qr_code.eq.$query')
-          .order('created_at', ascending: false);
+          .rpc('search_orders_warranty', params: {'keyword': query});
 
       setState(() {
         _searchResults = List<Map<String, dynamic>>.from(response);
       });
     } catch (e) {
       if (mounted) {
+        String message = 'Lỗi tra cứu: $e';
+        if (e.toString().contains('function search_orders_warranty does not exist')) {
+          message = 'Lỗi: Chưa cài đặt hàm tìm kiếm trên Database. Vui lòng chạy file create_warranty_rpc.sql';
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi tra cứu: $e')),
+          SnackBar(content: Text(message)),
         );
       }
     } finally {
@@ -73,6 +75,19 @@ class _CustomerWarrantyPageState extends State<CustomerWarrantyPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tra Cứu Bảo Hành'),
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              if (Supabase.instance.client.auth.currentUser != null) {
+                Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+              } else {
+                Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+              }
+            },
+            icon: const Icon(Icons.home),
+            label: const Text('Trang Chủ'),
+          ),
+        ],
       ),
       body: Column(
         children: [
