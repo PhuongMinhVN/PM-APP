@@ -14,11 +14,30 @@ class _MemberManagementPageState extends State<MemberManagementPage> {
   List<Profile> _users = [];
   bool _isLoading = true;
   String? _errorMessage;
+  Map<String, Map<String, int>> _userStats = {};
 
   @override
   void initState() {
     super.initState();
     _fetchUsers();
+    _fetchStats();
+  }
+
+  Future<void> _fetchStats() async {
+    try {
+      final data = await Supabase.instance.client.rpc('get_all_users_points_stats');
+      final stats = <String, Map<String, int>>{};
+      for (var item in data) {
+        stats[item['user_id']] = {
+          'today': item['points_today'],
+          'month': item['points_month'],
+          'total': item['points_total'],
+        };
+      }
+      if (mounted) setState(() => _userStats = stats);
+    } catch (e) {
+      debugPrint('Error fetching stats: $e');
+    }
   }
 
   Future<void> _fetchUsers() async {
@@ -417,6 +436,20 @@ class _MemberManagementPageState extends State<MemberManagementPage> {
                                 ),
                         ),
                         const Divider(),
+                        if (_userStats.containsKey(user.id)) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                 _buildMiniStat('Hôm nay', _userStats[user.id]!['today'] ?? 0),
+                                 _buildMiniStat('Tháng', _userStats[user.id]!['month'] ?? 0),
+                                 _buildMiniStat('Tổng', _userStats[user.id]!['total'] ?? 0, isBold: true),
+                              ],
+                            ),
+                          ),
+                          const Divider(),
+                        ],
                         Row(
                           children: [
                             const Text('Quyền hạn:', style: TextStyle(fontWeight: FontWeight.w500)),
@@ -456,6 +489,15 @@ class _MemberManagementPageState extends State<MemberManagementPage> {
                 );
               },
             ),
+    );
+  }
+
+  Widget _buildMiniStat(String label, int value, {bool isBold = false}) {
+    return Column(
+      children: [
+        Text(value.toString(), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isBold ? Colors.orange : Colors.black87)),
+        Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+      ],
     );
   }
 }

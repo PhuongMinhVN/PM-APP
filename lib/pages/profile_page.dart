@@ -27,11 +27,17 @@ class _ProfilePageState extends State<ProfilePage> {
   double _totalYearSales = 0;
   int _touchedIndex = -1;
 
+  // Points Stats
+  int _pointsToday = 0;
+  int _pointsMonth = 0;
+  int _pointsTotal = 0;
+
   @override
   void initState() {
     super.initState();
     _loadProfile();
     _loadSalesData();
+    _loadPointStats();
   }
 
   Future<void> _loadProfile() async {
@@ -93,6 +99,34 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       debugPrint('Chart Error: $e');
     }
+  }
+
+  Future<void> _loadPointStats() async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser!.id;
+      final response = await Supabase.instance.client
+          .rpc('get_sales_reward_stats', params: {'user_id': userId});
+      
+      if (response != null) {
+        setState(() {
+          _pointsToday = response['today'];
+          _pointsMonth = response['month'];
+          _pointsTotal = response['total'];
+        });
+      }
+    } catch (e) {
+      debugPrint('Points Stats Error: $e');
+    }
+  }
+
+  Widget _buildPointStat(String label, int value, {bool isTotal = false}) {
+    return Column(
+      children: [
+        Text(value.toString(), style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isTotal ? Colors.yellow : Colors.white)),
+        const Gap(4),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+      ],
+    );
   }
 
   Future<void> _updateAvatar() async {
@@ -310,6 +344,31 @@ class _ProfilePageState extends State<ProfilePage> {
 
                 // Sales Chart Section (Only for Sales/Admin)
                 if (_role == 'sales' || _role == 'admin') ...[
+                  // Points Stats
+                  Card(
+                    color: Colors.indigo.shade900.withOpacity(0.5),
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    child: Padding(
+                       padding: const EdgeInsets.all(16),
+                       child: Column(
+                         children: [
+                            const Text('Thống Kê Điểm Thưởng', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.indigoAccent)),
+                            const Gap(16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildPointStat('Hôm Nay', _pointsToday),
+                                _buildPointStat('Tháng Này', _pointsMonth),
+                                _buildPointStat('Tổng', _pointsTotal, isTotal: true),
+                              ],
+                            )
+                         ],
+                       ),
+                    ),
+                  ),
+                  const Gap(24),
+
                   Align(alignment: Alignment.centerLeft, child: Text('Doanh Số Năm Nay (Theo Tháng)', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 18))),
                   const Gap(8),
                   Card(

@@ -8,11 +8,13 @@ class Product {
   final String? category;
   final String? technicalSpecs;
   final DateTime createdAt;
+  final int rewardPoints; // Product specific points from DB
 
   // Cart/Sale specific fields (not in DB products table)
   int? cartWarrantyMonths;
   bool? cartIncludesInstallation;
   double? cartSalePrice;
+  int? cartRewardPoints;
 
   Product({
     required this.id,
@@ -24,9 +26,11 @@ class Product {
     this.category,
     this.technicalSpecs,
     required this.createdAt,
+    this.rewardPoints = 0,
     this.cartWarrantyMonths,
     this.cartIncludesInstallation,
     this.cartSalePrice,
+    this.cartRewardPoints,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -40,6 +44,7 @@ class Product {
       category: json['category'],
       technicalSpecs: json['technical_specs'],
       createdAt: DateTime.parse(json['created_at']),
+      rewardPoints: json['reward_points'] ?? 0,
     );
   }
 
@@ -73,9 +78,11 @@ class Product {
       category: category,
       technicalSpecs: technicalSpecs,
       createdAt: createdAt,
+      rewardPoints: rewardPoints,
       cartWarrantyMonths: cartWarrantyMonths ?? this.cartWarrantyMonths,
       cartIncludesInstallation: cartIncludesInstallation ?? this.cartIncludesInstallation,
       cartSalePrice: cartSalePrice ?? this.cartSalePrice,
+      cartRewardPoints: cartRewardPoints ?? this.cartRewardPoints,
     );
   }
 }

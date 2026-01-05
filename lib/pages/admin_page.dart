@@ -6,6 +6,8 @@ import 'admin/pending_orders_page.dart';
 import 'admin/customer_management_page.dart';
 import 'sales_statistics_page.dart';
 
+import 'admin/admin_settings_page.dart';
+
 class AdminPage extends StatefulWidget {
   const AdminPage({super.key});
 
@@ -89,7 +91,10 @@ class _AdminPageState extends State<AdminPage> {
                   title: 'Cài Đặt',
                   color: Colors.orange,
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tính năng đang phát triển')));
+                     Navigator.push(
+                       context,
+                       MaterialPageRoute(builder: (context) => const AdminSettingsPage()),
+                     );
                   },
                 ),
                 _buildAdminCard(

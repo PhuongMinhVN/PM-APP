@@ -39,11 +39,31 @@ class _CheckoutPageState extends State<CheckoutPage> {
   bool _isLoading = false;
   bool _isGettingLocation = false;
   double _discountPercent = 0;
+  bool _isAdmin = false;
 
   @override
   void initState() {
     super.initState();
     _processCart();
+    _checkRole();
+  }
+
+  Future<void> _checkRole() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      try {
+         final data = await Supabase.instance.client
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+         if (mounted) {
+           setState(() {
+             _isAdmin = data['role'] == 'admin';
+           });
+         }
+      } catch (_) {}
+    }
   }
 
   void _processCart() {
@@ -231,6 +251,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           'quantity': item.quantity, // Insert Quantity
           'warranty_end_date': endDate.toIso8601String(),
           'is_service': int.tryParse(product.id) == null || product.category == 'Dịch vụ',
+          'reward_points': (product.cartRewardPoints ?? 0) * item.quantity, // Points for total qty
         });
 
         invoiceItems.add({
@@ -303,6 +324,34 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   String _formatCurrency(double price) {
     return NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(price);
+  }
+
+  void _showEditPointsDialog(Product product) {
+    final pointsCtrl = TextEditingController(text: (product.cartRewardPoints ?? 0).toString());
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sửa Điểm Thưởng'),
+        content: TextField(
+          controller: pointsCtrl,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'Số điểm'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
+          ElevatedButton(
+            onPressed: () {
+              final newPoints = int.tryParse(pointsCtrl.text) ?? 0;
+              setState(() {
+                product.cartRewardPoints = newPoints;
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -460,6 +509,26 @@ class _CheckoutPageState extends State<CheckoutPage> {
                               ),
                               const Gap(4),
                               Text(_formatCurrency((product.cartSalePrice ?? product.price)), style: const TextStyle(color: Color(0xFFCF6679), fontWeight: FontWeight.bold)),
+                              const Gap(4),
+                              Row(
+                                children: [
+                                  Text(
+                                    'Điểm: ${(product.cartRewardPoints ?? 0) * item.quantity}', // Show total points for this line item? Or unit points? Usually total is clearer or "x points/unit". Let's show total for the line.
+                                    // Wait, product.cartRewardPoints is per unit.
+                                    // Let's show "x pts"
+                                    style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.bold),
+                                  ),
+                                  if (_isAdmin)
+                                    SizedBox(
+                                      width: 24, height: 24,
+                                      child: IconButton(
+                                        icon: const Icon(Icons.edit, size: 14, color: Colors.orange),
+                                        onPressed: () => _showEditPointsDialog(product),
+                                        padding: EdgeInsets.zero,
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ],
                           ),
                         ),
