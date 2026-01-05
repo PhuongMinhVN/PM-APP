@@ -27,7 +27,9 @@ jobs:
         run: flutter pub get
 
       - name: Fix content permissions
-        run: chmod +x android/gradlew
+        run: |
+          chmod +x android/gradlew
+          sed -i 's/\r$//' android/gradlew
 
       - name: Build APK
         run: flutter build apk --release
