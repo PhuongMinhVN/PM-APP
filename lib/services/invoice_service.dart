@@ -64,13 +64,24 @@ class InvoiceService {
                      ),
                    ),
                    // QR Code
-                   pw.Container(
-                     height: 60,
-                     width: 60,
-                     child: pw.BarcodeWidget(
-                       barcode: pw.Barcode.qrCode(),
-                       data: orderId,
-                     ),
+                   // QR Code
+                   pw.Column(
+                     children:[
+                       pw.Container(
+                         height: 60,
+                         width: 60,
+                         child: pw.BarcodeWidget(
+                           barcode: pw.Barcode.qrCode(),
+                           data: orderId,
+                         ),
+                       ),
+                       pw.SizedBox(height: 5),
+                       pw.Text('Kiểm tra bảo hành tại link:', style: pw.TextStyle(font: font, fontSize: 8)),
+                       pw.UrlLink(
+                         child: pw.Text('phuongminhvn.github.io/PM-APP', style: pw.TextStyle(font: font, fontSize: 8, color: PdfColors.blue, decoration: pw.TextDecoration.underline)),
+                         destination: 'https://phuongminhvn.github.io/PM-APP/',
+                       ),
+                     ]
                    ),
                 ],
               ),
