@@ -87,7 +87,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       final data = await Supabase.instance.client
           .from('products')
           .select()
-          .order('created_at', ascending: false);
+          .order('priority', ascending: false)
+          .order('price', ascending: true);
       
       setState(() {
         _products = (data as List).map((e) => Product.fromJson(e)).toList();
@@ -304,6 +305,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               icon: const Icon(Icons.add_task), // Icon for service product
               tooltip: 'Thêm Dịch Vụ Mới',
             ),
+             if (_profile != null) // Only show for logged in users
              IconButton(
               onPressed: () => _showAddServiceDialog(),
               icon: const Icon(Icons.design_services), // Icon for repair/quick service
@@ -312,7 +314,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         ],
       ),
       drawer: _buildDrawer(context),
-      floatingActionButton: context.watch<CartProvider>().cart.isNotEmpty ? FloatingActionButton.extended(
+      floatingActionButton: (Supabase.instance.client.auth.currentUser != null && context.watch<CartProvider>().cart.isNotEmpty) ? FloatingActionButton.extended(
         onPressed: _goToCheckout,
         label: Text('Giỏ hàng (${context.watch<CartProvider>().cart.length})'),
         icon: const Icon(Icons.shopping_cart_checkout),
@@ -402,30 +404,36 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
 
   Widget _buildDrawer(BuildContext context) {
+    final user = Supabase.instance.client.auth.currentUser;
+    final isGuest = user == null;
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
           UserAccountsDrawerHeader(
-            accountName: Text(_profile?.fullName ?? 'Người dùng'),
-            accountEmail: Text((_profile?.role ?? '...').toUpperCase()),
+            accountName: Text(isGuest ? 'Khách Tham Quan' : (_profile?.fullName ?? 'Người dùng')),
+            accountEmail: Text(isGuest ? 'Chưa đăng nhập' : (_profile?.role ?? '...').toUpperCase()),
             currentAccountPicture: GestureDetector(
               onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/profile');
+                if (!isGuest) {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/profile');
+                }
               },
               child: CircleAvatar(
                 backgroundColor: Colors.grey.shade800,
-                backgroundImage: _profile?.avatarUrl != null ? NetworkImage(_profile!.avatarUrl!) : null,
-                child: _profile?.avatarUrl == null
+                backgroundImage: (!isGuest && _profile?.avatarUrl != null) ? NetworkImage(_profile!.avatarUrl!) : null,
+                child: (isGuest || _profile?.avatarUrl == null)
                   ? Text(
-                      (_profile?.fullName ?? 'U').substring(0, 1).toUpperCase(),
+                      isGuest ? 'G' : (_profile?.fullName ?? 'U').substring(0, 1).toUpperCase(),
                       style: const TextStyle(fontSize: 24.0),
                     )
                   : null,
               ),
             ),
           ),
+          if (!isGuest)
           ListTile(
             leading: const Icon(Icons.person),
             title: const Text('Hồ Sơ Cá Nhân'),
@@ -439,6 +447,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             title: const Text('Trang Chủ'),
             onTap: () => Navigator.pop(context),
           ),
+          if (!isGuest)
           ListTile(
             leading: const Icon(Icons.list_alt),
             title: const Text('Đơn Hàng Của Tôi'),
@@ -452,7 +461,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             title: const Text('Tra Cứu Bảo Hành'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/warranty');
+              if (isGuest) {
+                Navigator.pushNamed(context, '/lookup_warranty');
+              } else {
+                Navigator.pushNamed(context, '/warranty');
+              }
             },
           ),
           if (_profile?.isAdmin == true)
@@ -482,16 +495,25 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             },
           ),
           const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Đăng Xuất'),
-            onTap: () async {
-              await Supabase.instance.client.auth.signOut();
-              if (mounted) {
+          if (isGuest)
+             ListTile(
+              leading: const Icon(Icons.login),
+              title: const Text('Đăng Nhập Ngay'),
+              onTap: () {
                 Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-              }
-            },
-          ),
+              },
+            )
+          else
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Đăng Xuất'),
+              onTap: () async {
+                await Supabase.instance.client.auth.signOut();
+                if (mounted) {
+                  Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                }
+              },
+            ),
         ],
       ),
     );

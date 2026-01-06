@@ -182,6 +182,22 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () {
+                        Navigator.pushNamed(context, '/home');
+                      },
+                      icon: const Icon(Icons.store),
+                      label: const Text('Xem Cửa Hàng (Chỉ Tham Khảo)'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: const BorderSide(color: Colors.amber), 
+                        foregroundColor: Colors.amber,
+                      ),
+                    ),
+                  ),
+                  const Gap(16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
                         print('Navigating to Warranty Lookup...');
                         Navigator.pushNamed(context, '/lookup_warranty');
                       },

@@ -216,6 +216,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               ),
             ),
           ),
+          if (Supabase.instance.client.auth.currentUser != null) 
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(

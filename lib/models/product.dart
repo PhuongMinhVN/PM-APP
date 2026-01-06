@@ -9,6 +9,7 @@ class Product {
   final String? technicalSpecs;
   final DateTime createdAt;
   final int rewardPoints; // Product specific points from DB
+  final int priority;
 
   // Cart/Sale specific fields (not in DB products table)
   int? cartWarrantyMonths;
@@ -27,6 +28,7 @@ class Product {
     this.technicalSpecs,
     required this.createdAt,
     this.rewardPoints = 0,
+    this.priority = 0,
     this.cartWarrantyMonths,
     this.cartIncludesInstallation,
     this.cartSalePrice,
@@ -45,6 +47,7 @@ class Product {
       technicalSpecs: json['technical_specs'],
       createdAt: DateTime.parse(json['created_at']),
       rewardPoints: json['reward_points'] ?? 0,
+      priority: json['priority'] ?? 0,
     );
   }
 
@@ -59,6 +62,7 @@ class Product {
       'category': category,
       'technical_specs': technicalSpecs,
       'created_at': createdAt.toIso8601String(),
+      'priority': priority,
     };
   }
 
@@ -79,6 +83,7 @@ class Product {
       technicalSpecs: technicalSpecs,
       createdAt: createdAt,
       rewardPoints: rewardPoints,
+      priority: priority,
       cartWarrantyMonths: cartWarrantyMonths ?? this.cartWarrantyMonths,
       cartIncludesInstallation: cartIncludesInstallation ?? this.cartIncludesInstallation,
       cartSalePrice: cartSalePrice ?? this.cartSalePrice,

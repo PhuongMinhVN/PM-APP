@@ -24,6 +24,7 @@ class _AddProductPageState extends State<AddProductPage> {
   final _imageUrlController = TextEditingController();
   final _qrController = TextEditingController();
   final _specsController = TextEditingController();
+  final _priorityController = TextEditingController(text: '0');
   
   String? _selectedCategory;
   final List<String> _categories = [
@@ -51,6 +52,7 @@ class _AddProductPageState extends State<AddProductPage> {
       _imageUrlController.text = p.imageUrl ?? '';
       _qrController.text = widget.productToClone != null ? '' : (p.qrCode ?? '');
       _specsController.text = p.technicalSpecs ?? '';
+      _priorityController.text = p.priority.toString();
       _isTwoYearWarranty = p.warrantyPeriodMonths >= 24;
     } else {
       if (widget.isService) {
@@ -128,6 +130,7 @@ class _AddProductPageState extends State<AddProductPage> {
       final qr = _qrController.text.trim().isEmpty ? null : _qrController.text.trim();
       final imageUrl = _imageUrlController.text.trim().isEmpty ? null : _imageUrlController.text.trim();
       final specs = _specsController.text.trim().isEmpty ? null : _specsController.text.trim();
+      final priority = int.tryParse(_priorityController.text) ?? 0;
 
       int warrantyMonths = 12;
       double finalPrice = basePrice;
@@ -145,6 +148,7 @@ class _AddProductPageState extends State<AddProductPage> {
         'warranty_period_months': warrantyMonths,
         'category': _selectedCategory,
         'technical_specs': specs,
+        'priority': priority,
       };
 
       if (widget.productToEdit != null) {
@@ -268,6 +272,15 @@ class _AddProductPageState extends State<AddProductPage> {
                     icon: const Icon(Icons.qr_code_scanner),
                   ),
                 ],
+              ),
+              const Gap(16),
+              TextFormField(
+                controller: _priorityController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Độ ưu tiên hiển thị (Mặc định: 0)',
+                  helperText: 'Số càng lớn sản phẩm càng hiện lên đầu',
+                ),
               ),
               const Gap(16),
               if (!widget.isService)
