@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../models/product.dart';
 import 'add_product_page.dart';
+import '../utils/image_helper.dart';
+import '../widgets/universal_image.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final Product product;
@@ -117,13 +119,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   Container(
                     height: 300,
                     color: Colors.grey.shade900,
-                    child: widget.product.imageUrl != null && widget.product.imageUrl!.isNotEmpty
-                        ? Image.network(
-                            widget.product.imageUrl!,
+                            child: widget.product.imageUrl != null && widget.product.imageUrl!.isNotEmpty
+                        ? UniversalImage(
+                            imageUrl: ImageHelper.sanitizeUrl(widget.product.imageUrl!),
                             fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => const Center(
-                              child: Icon(Icons.broken_image, size: 64, color: Colors.grey),
-                            ),
                           )
                         : const Center(
                             child: Icon(Icons.image, size: 64, color: Colors.grey),

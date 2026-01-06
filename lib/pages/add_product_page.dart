@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import '../models/product.dart';
 import 'scan_qr_page.dart';
+import '../utils/image_helper.dart';
 
 class AddProductPage extends StatefulWidget {
   final Product? productToEdit;
@@ -139,7 +140,7 @@ class _AddProductPageState extends State<AddProductPage> {
       final data = {
         'name': name,
         'price': finalPrice,
-        'image_url': imageUrl,
+        'image_url': imageUrl != null ? ImageHelper.sanitizeUrl(imageUrl) : null,
         'qr_code': qr,
         'warranty_period_months': warrantyMonths,
         'category': _selectedCategory,

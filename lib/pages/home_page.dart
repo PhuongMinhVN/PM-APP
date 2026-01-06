@@ -10,6 +10,8 @@ import 'checkout_page.dart';
 import 'add_product_page.dart';  
 import 'product_detail_page.dart'; // Import detail page
 import 'my_orders_page.dart'; // Import my orders page
+import '../utils/image_helper.dart';
+import '../widgets/universal_image.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -341,11 +343,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                           children: [
                             Expanded(
                               child: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                                  ? Image.network(
-                                      product.imageUrl!,
+                                  ? UniversalImage(
+                                      imageUrl: ImageHelper.sanitizeUrl(product.imageUrl!),
                                       fit: BoxFit.cover,
                                       width: double.infinity,
-                                      errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, size: 50)),
                                     )
                                   : Container(
                                       color: Colors.grey.shade800, // Darker placeholder
